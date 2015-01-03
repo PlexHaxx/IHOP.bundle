@@ -28,7 +28,7 @@ def MainMenu():
     try:
         Log.Debug("Loading Worship Leaders")
         IHOP_JAVASCRIPT_RAW = HTTP.Request(IHOP_JAVASCRIPT_URL).content
-        wleaders_match = RE_WLEADER.search(IHOP_JAVASCRIPT_RAW).group(0)
+        wleaders_match = RE_WLEADER.search(IHOP_JAVASCRIPT_RAW).group(1)
         Log.Debug("Got response: %s" % wleaders_match)
         wleaders = JSON.ObjectFromString(wleaders_match)
         Log.Debug(str(wleaders))
