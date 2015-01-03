@@ -14,6 +14,7 @@ RE_WLEADER = Regex('e.worshipLeaders\[0\]\.toLowerCase\(\)\)return"";var t\=(\[[
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0'
 TITLE = L('IHOP')
 ICON = 'icon-default.png'
+ART = 'art-default.jpg'
 VIDEOS = 'icon-videos.png'
 
 ####################################################################################################
@@ -25,12 +26,11 @@ def Start():
 @route(PREFIX + '/thumb')
 def GetThumb(url):
     Log.Debug(url)
-    if not url:
-        data = HTTP.Request(url).content #cacheTime = CACHE_1WEEK
-        Log.Debug(data)
+    if url:
+        data = HTTP.Request(url, cacheTime = CACHE_1WEEK).content
         return DataObject(data, 'image/jpeg')
     else:
-        return R(VIDEOS)
+        return Redirect(R(VIDEOS))
 
 @indirect
 def PlayVideo(url):
@@ -81,7 +81,10 @@ def createEpisodeObject(url, title, summary, thumburl, rating_key, originally_av
 
 @route(PREFIX + '/worshiper')
 def WorshipLeaderMenu(artist=None):
-    URL = IHOP_FEED_URL + IHOP_FEED_QUERY % (IHOP_FEED_FILT_ARTIST % artist.replace(" ", "+"), 0, MAXRESULTS)
+    if artist:
+        URL = IHOP_FEED_URL + IHOP_FEED_QUERY % (IHOP_FEED_FILT_ARTIST % artist.replace(" ", "+"), 0, MAXRESULTS)
+    else:
+        URL = IHOP_FEED_URL
     container = Container.MP4
     video_codec = VideoCodec.H264
     audio_codec = AudioCodec.AAC
@@ -89,11 +92,15 @@ def WorshipLeaderMenu(artist=None):
     Log.Debug(URL)
     data = JSON.ObjectFromURL(URL)
     Log.Debug(data)
-    oc = ObjectContainer(title2=data["title"]+" - " + artist)
+    if not artist:
+        oc = ObjectContainer(title2=data["title"]+" - " + L("All Videos"))
+    else:
+        oc = ObjectContainer(title2=data["title"]+" - " + artist)
     for ent in data.get('entries', []):
         if "content" not in ent:
             continue
         video_url = ""
+        title = "%s - %s - %s" % (ent.get("title"), ', '.join(ent.get('ihopkc$setType',[''])), ', '.join(ent.get('ihopkc$worshipLeader',[''])))
         duration = 0
         for c in ent.get("content"):
             if c.get("contentType") == "video":
@@ -104,37 +111,16 @@ def WorshipLeaderMenu(artist=None):
             Log.Debug(video_url)
             oc.add(createEpisodeObject(
                 url = video_url,
-                title = ent.get("title"),
-                summary = ent.get("description"),
-                originally_available_at=Datetime.FromTimestamp(ent.get("pubDate")/100),
-                duration = int(duration),
+                title = title,
+                summary = title,
+                originally_available_at=Datetime.FromTimestamp(ent.get("added")/1000),
+                duration = int(duration*1000),
                 rating_key = ent.get("guid"),
                 thumburl = ent.get("defaultThumbnailUrl"),
             ))
-            # oc.add(VideoClipObject(
-            #   #url = video_url,
-            #   key=Callback(PlayVideo, url=video_url),
-            #   rating_key=0,
-            #   items = [
-            #     MediaObject(
-            #         parts = [
-            #             PartObject(key=Callback(PlayVideo, url=video_url))
-            #         ],
-            #         container = container,
-            #         video_codec = video_codec,
-            #         audio_codec = audio_codec,
-            #         audio_channels = audio_channels,
-            #     )
-            #   ],
-            #   title = ent.get("title"),
-            #   summary = ent.get("description"),
-            #   thumb = Callback(GetThumb, url=ent.get("defaultThumbnailUrl")),
-            #   originally_available_at=Datetime.FromTimestamp(ent.get("pubDate")/100),
-            #   duration = int(duration),
-            #   tagline = 'tagline'))
     return oc
 
-@handler(PREFIX, NAME)
+@handler(PREFIX, NAME, R(ART), R(ICON))
 def MainMenu():
     oc = ObjectContainer(no_cache = True)
     Log.Debug("Load Main Menu")
@@ -150,6 +136,7 @@ def MainMenu():
         Log.Exception(exc)
 
     Log.Debug(str(wleaders))
+    oc.add(DirectoryObject(key=Callback(WorshipLeaderMenu), title = L("All Videos"), thumb = R(VIDEOS)))
     for wleader in wleaders:
         Log.Debug("Adding Worship Leader: %s" % wleader)
         oc.add(DirectoryObject(key = Callback(WorshipLeaderMenu, artist=wleader), title = wleader, thumb = R(VIDEOS)))
