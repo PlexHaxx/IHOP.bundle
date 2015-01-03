@@ -22,6 +22,8 @@ def Start():
     #HTTP.CacheTime = CACHE_1HOUR
     HTTP.Headers['User-Agent'] = USER_AGENT
     Log.Debug("Starting the IHOP Plugin")
+    Plugin.AddViewGroup("Details", viewMode="InfoList", mediaType="items")
+    Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
 
 @route(PREFIX + '/thumb')
 def GetThumb(url):
@@ -96,6 +98,8 @@ def WorshipLeaderMenu(artist=None):
         oc = ObjectContainer(title2=data["title"]+" - " + L("All Videos"))
     else:
         oc = ObjectContainer(title2=data["title"]+" - " + artist)
+    oc.art = R(ART)
+    oc.view_group = "Details"
     for ent in data.get('entries', []):
         if "content" not in ent:
             continue
@@ -123,6 +127,7 @@ def WorshipLeaderMenu(artist=None):
 @handler(PREFIX, NAME, R(ART), R(ICON))
 def MainMenu():
     oc = ObjectContainer(no_cache = True)
+    oc.art = R(ART)
     Log.Debug("Load Main Menu")
     wleaders = []
     try:
