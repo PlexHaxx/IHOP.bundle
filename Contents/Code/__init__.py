@@ -19,16 +19,16 @@ ICON = 'icon-default.png'
 def Start():
     HTTP.CacheTime = CACHE_1HOUR
     HTTP.Headers['User-Agent'] = USER_AGENT
-    Log("Startup the IHOP Plugin")
+    Log.Debug("Startup the IHOP Plugin")
 
 @handler(PREFIX, NAME)
 def MainMenu():
-    Log("Load Main Menu")
+    Log.Debug("Load Main Menu")
     wleaders = []
     try:
-        Log("Loading Worship Leaders")
+        Log.Debug("Loading Worship Leaders")
         wleaders = JSON.ObjectFromString(RE_WLEADER.search(IHOP_JAVASCRIPT).group(0))
-        Log(str(wleaders))
+        Log.Debug(str(wleaders))
     except:
         pass
 
