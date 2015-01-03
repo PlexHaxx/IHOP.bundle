@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-PREFIX = "/video/ihop/"
+PREFIX = "/video/ihop"
 NAME = "IHOP Plugin"
 
 MAXRESULTS = 50
@@ -19,7 +19,7 @@ ICON = 'icon-default.png'
 def Start():
     HTTP.CacheTime = CACHE_1HOUR
     HTTP.Headers['User-Agent'] = USER_AGENT
-    Log.Debug("Startup the IHOP Plugin")
+    Log.Debug("Starting the IHOP Plugin")
 
 @handler(PREFIX, NAME)
 def MainMenu():
